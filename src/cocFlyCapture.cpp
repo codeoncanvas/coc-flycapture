@@ -1,5 +1,6 @@
 #include "cocFlyCapture.h"
 #include "cinder/ImageIo.h"
+#include "cinder/Log.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -9,55 +10,22 @@ namespace coc{
 	
 using namespace FlyCapture2;
 
+// <GLOBAL IF THREADED>
+
 std::mutex	imageGrabberMutex;
 
 void onImageGrabbed(Image* pImage, const void* pCallbackData)
 {
 
 	imageGrabberMutex.lock();
-	coc::FlyCapture* firefly = (coc::FlyCapture*) pCallbackData;
-	firefly->update(pImage);
+	coc::FlyCapture* cam = (coc::FlyCapture*) pCallbackData;
+	cam->update(pImage);
 	imageGrabberMutex.unlock();
 }
 
-bool FlyCapture::setup( bool _isCol )
-{    
-	isThreaded = false;
-    isCol = _isCol;
-    width  = 640;
-    height = 480;
-    if (!isCol) {
-		channel = Channel(width,height);
-	} else {
-		surface = Surface( width, height, false, SurfaceChannelOrder::RGB );
-	}
+// </GLOBAL IF THREADED>
 
-    PrintBuildInfo();
-
-    BusManager busMgr;
-    unsigned int numCameras;
-    error = busMgr.GetNumOfCameras(&numCameras);
-    if (error != PGRERROR_OK) PrintError( error );
-
-    printf( "Number of cameras detected: %u\n", numCameras );
-
-    for (unsigned int i=0; i < 1; i++) //setup first camera only
-    {
-        PGRGuid guid;
-        error = busMgr.GetCameraFromIndex(i, &guid);
-
-		console() <<" GUID is "<< guid.value << endl;
-        if (error != PGRERROR_OK) PrintError( error );
-
-       setupSingleCamera( guid );
-        
-       return true; 
-    }
-	
-    return false;
-}
-
-void FlyCapture::setup( int _serial, int _w, int _h, bool _isCol )
+void FlyCapture::setup(int _w, int _h, bool _isCol, bool _threaded, int _serial)
 {
 	isThreaded = false;
 	isCol = _isCol;
@@ -68,7 +36,6 @@ void FlyCapture::setup( int _serial, int _w, int _h, bool _isCol )
 	} else {
 		surface = Surface( width, height, false, SurfaceChannelOrder::RGB );
 	}
-
 
     PrintBuildInfo();
 
@@ -84,65 +51,37 @@ void FlyCapture::setup( int _serial, int _w, int _h, bool _isCol )
 		busMgr.GetCameraSerialNumberFromIndex(i, &num);
 		console() << "\t" << num << endl;
 	}
-	
+
 	PGRGuid guid;
-	error = busMgr.GetCameraFromSerialNumber(_serial, &guid);
-
-    if (error != PGRERROR_OK) PrintError( error );
-
-    setupSingleCamera( guid );
-
-}
-
-void FlyCapture::setupThreaded( int _serial, int _w, int _h, bool _isCol )
-{
-	isThreaded = true;
-	isCol = _isCol;
-    width  = _w;
-    height = _h;
-    if (!isCol) {
-		channel = Channel(width,height);
-	} else {
-		surface = Surface( width, height, false, SurfaceChannelOrder::RGB );
+	if (_serial) {
+		error = busMgr.GetCameraFromSerialNumber(_serial, &guid);
 	}
-
-
-    PrintBuildInfo();
-
-    BusManager busMgr;
-    unsigned int numCameras;
-    error = busMgr.GetNumOfCameras(&numCameras);
-    if (error != PGRERROR_OK) PrintError( error );
-
-    printf( "Number of cameras detected: %u:\n", numCameras );
-
-	for (int i=0; i<numCameras; i++) {
+	else {
 		unsigned int num;
-		busMgr.GetCameraSerialNumberFromIndex(i, &num);
-		console() << "\t" << num << endl;
+		busMgr.GetCameraSerialNumberFromIndex(0, &num);
+		error = busMgr.GetCameraFromSerialNumber(num, &guid);
 	}
-	
-	PGRGuid guid;
-	error = busMgr.GetCameraFromSerialNumber(_serial, &guid);
-
     if (error != PGRERROR_OK) PrintError( error );
 
-    // Connect to a camera
-    error = cam.Connect(&guid);
-    if (error != PGRERROR_OK) PrintError( error );
+	// Connect to a camera
+	error = cam.Connect(&guid);
+	if (error != PGRERROR_OK) PrintError(error);
 
-    // Get the camera information
-    CameraInfo camInfo;
-    error = cam.GetCameraInfo(&camInfo);
-    if (error != PGRERROR_OK) PrintError( error );
+	// Get the camera information
+	CameraInfo camInfo;
+	error = cam.GetCameraInfo(&camInfo);
+	if (error != PGRERROR_OK) PrintError(error);
+	PrintCameraInfo(&camInfo);
 
-    PrintCameraInfo(&camInfo);   
-
-    // Start capturing images
-	error = cam.StartCapture(onImageGrabbed, (void*)this);
-    if (error != PGRERROR_OK) PrintError( error );
-
+	if (!isThreaded) {
+		error = cam.StartCapture();
+	}
+	else {
+		error = cam.StartCapture(onImageGrabbed, (void*)this);
+	}
+	if (error != PGRERROR_OK) PrintError(error);
 }
+
 
 void FlyCapture::setup( int _serial, bool _isCol, Format7ImageSettings _fmt7ImageSettings, float _speed, bool _threaded )
 {
@@ -198,63 +137,18 @@ void FlyCapture::setup( int _serial, bool _isCol, Format7ImageSettings _fmt7Imag
 
 }
 
-void FlyCapture::setupSingleCamera( PGRGuid guid )
-{
-
-	 // Connect to a camera
-    error = cam.Connect(&guid);
-    if (error != PGRERROR_OK) PrintError( error );
-
-    // Get the camera information
-    CameraInfo camInfo;
-    error = cam.GetCameraInfo(&camInfo);
-    if (error != PGRERROR_OK) PrintError( error );
-
-    PrintCameraInfo(&camInfo);   
-
-    // Start capturing images
-    error = cam.StartCapture();
-
-	//error = cam.StartCapture(onImageGrabbed, (void*)this);
-    if (error != PGRERROR_OK) PrintError( error );
-
-	
-}
 
 void FlyCapture::update() {
+	
+	if (isThreaded)
+	{
+		//CI_LOG_E("Threaded, no need to call update()!");
+	}
+	else
+	{
+		update( nullptr );
+	}
 
-		if (isThreaded)
-		{
-			console() << "Error: Threaded, no need to call update()!" <<endl;
-		}
-		else 
-		{
-			update( nullptr );
-		}
-
-  //      // Retrieve an image
-  //      Image rawImage; 
-		//error = cam.RetrieveBuffer( &rawImage );
-		//if (error != PGRERROR_OK)PrintError( error );            
-
-		//		
-		//Image convertedImage;
-		//if (!isCol) {//make mono
-		//	error = rawImage.Convert( PIXEL_FORMAT_MONO8, &convertedImage );    
-		//	if (error != PGRERROR_OK) PrintError( error );
-		//	memcpy(channel.getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows());
-		//	isNewFrame = true;
-		//}
-		//else {//RGB
-		//	//convertedImage.SetDefaultColorProcessing(DEFAULT);
-
-		//	error = rawImage.Convert( PIXEL_FORMAT_RGB8, &convertedImage ); 
-		//	
-		//	if (error != PGRERROR_OK) PrintError( error );
-		//	memcpy(surface.getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows() * 3);
-		//	isNewFrame = true;
-		//
-		//}
 }
 
 
@@ -262,36 +156,55 @@ void FlyCapture::update( Image *rawImage ) //threaded function for flea
 {
 
 	if (rawImage == nullptr) {
-		// Retrieve an image
-		rawImage = new Image(); 
-		error = cam.RetrieveBuffer( rawImage );
-		if (error != PGRERROR_OK)PrintError( error ); 
+		Image rawImage;
+		error = cam.RetrieveBuffer(&rawImage);
+		if (error != PGRERROR_OK)PrintError(error);
+
+
+		Image convertedImage;
+		if (!isCol) {//make mono
+			error = rawImage.Convert(PIXEL_FORMAT_MONO8, &convertedImage);
+			if (error != PGRERROR_OK) PrintError(error);
+			memcpy(channel.getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows());
+			isNewFrame = true;
+		}
+		else {//RGB
+
+			error = rawImage.Convert(PIXEL_FORMAT_RGB8, &convertedImage);
+			if (error != PGRERROR_OK) PrintError(error);
+
+			memcpy(surface.getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows() * 3);
+			isNewFrame = true;
+
+		}
+	}
+	else {
+		Image convertedImage;
+		if (!isCol) {//make mono
+			error = rawImage->Convert(PIXEL_FORMAT_MONO8, &convertedImage);
+			if (error != PGRERROR_OK) PrintError(error);
+
+			imageMutex.lock();
+			memcpy(channel.getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows());
+			isNewFrame = true;
+			imageMutex.unlock();
+
+		}
+		else {//RGB
+
+			error = rawImage->Convert(PIXEL_FORMAT_RGB, &convertedImage);
+			if (error != PGRERROR_OK) PrintError(error);
+
+			imageMutex.lock();
+			memcpy(surface.getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows() * 3);
+			isNewFrame = true;
+			imageMutex.unlock();
+
+
+		}
 	}
 	
-    Image convertedImage;
-	if (!isCol) {//make mono
-		error = rawImage->Convert( PIXEL_FORMAT_MONO8, &convertedImage );    
-		if (error != PGRERROR_OK) PrintError( error );
-        // copy to channel
 
-		imageMutex.lock();
-		memcpy(channel.getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows());
-		isNewFrame = true;
-		imageMutex.unlock();
-
-	}
-	else {//RGB
-		
-		error = rawImage->Convert( PIXEL_FORMAT_RGB, &convertedImage );   
-		if (error != PGRERROR_OK) PrintError( error );
-		
-		imageMutex.lock();
-		memcpy(surface.getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows() * 3);
-		isNewFrame = true;
-		imageMutex.unlock();
-
-		
-	}
 	
 }
 

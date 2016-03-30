@@ -1,4 +1,4 @@
-#include "spinFirefly.h"
+#include "cocFlyCapture.h"
 #include "cinder/ImageIo.h"
 
 using namespace ci;
@@ -15,12 +15,12 @@ void onImageGrabbed(Image* pImage, const void* pCallbackData)
 {
 
 	imageGrabberMutex.lock();
-	spin::Firefly* firefly = (spin::Firefly*) pCallbackData;
+	coc::FlyCapture* firefly = (coc::FlyCapture*) pCallbackData;
 	firefly->update(pImage);
 	imageGrabberMutex.unlock();
 }
 
-bool Firefly::setup( bool _isCol )
+bool FlyCapture::setup( bool _isCol )
 {    
 	isThreaded = false;
     isCol = _isCol;
@@ -57,7 +57,7 @@ bool Firefly::setup( bool _isCol )
     return false;
 }
 
-void Firefly::setup( int _serial, int _w, int _h, bool _isCol )
+void FlyCapture::setup( int _serial, int _w, int _h, bool _isCol )
 {
 	isThreaded = false;
 	isCol = _isCol;
@@ -94,7 +94,7 @@ void Firefly::setup( int _serial, int _w, int _h, bool _isCol )
 
 }
 
-void Firefly::setupThreaded( int _serial, int _w, int _h, bool _isCol )
+void FlyCapture::setupThreaded( int _serial, int _w, int _h, bool _isCol )
 {
 	isThreaded = true;
 	isCol = _isCol;
@@ -144,7 +144,7 @@ void Firefly::setupThreaded( int _serial, int _w, int _h, bool _isCol )
 
 }
 
-void Firefly::setup( int _serial, bool _isCol, Format7ImageSettings _fmt7ImageSettings, float _speed, bool _threaded )
+void FlyCapture::setup( int _serial, bool _isCol, Format7ImageSettings _fmt7ImageSettings, float _speed, bool _threaded )
 {
 	isThreaded = _threaded;
 	isCol = _isCol;
@@ -198,7 +198,7 @@ void Firefly::setup( int _serial, bool _isCol, Format7ImageSettings _fmt7ImageSe
 
 }
 
-void Firefly::setupSingleCamera( PGRGuid guid )
+void FlyCapture::setupSingleCamera( PGRGuid guid )
 {
 
 	 // Connect to a camera
@@ -221,7 +221,7 @@ void Firefly::setupSingleCamera( PGRGuid guid )
 	
 }
 
-void Firefly::update() {
+void FlyCapture::update() {
 
 		if (isThreaded)
 		{
@@ -258,7 +258,7 @@ void Firefly::update() {
 }
 
 
-void Firefly::update( Image *rawImage ) //threaded function for flea
+void FlyCapture::update( Image *rawImage ) //threaded function for flea
 {
 
 	if (rawImage == nullptr) {
@@ -295,33 +295,33 @@ void Firefly::update( Image *rawImage ) //threaded function for flea
 	
 }
 
-void Firefly::generateTexture() {
+void FlyCapture::generateTexture() {
 	
 	if (!isCol) {//make mono
 		imageMutex.lock();
-        tex = gl::Texture( channel );
+        tex = gl::Texture::create( channel );
 		imageMutex.unlock();
 	}
 	else {//RGB
 		imageMutex.lock();
-		if (surface) tex = gl::Texture( surface );
+		if (surface.getData()) tex = gl::Texture::create( surface );
 		imageMutex.unlock();
 	}
 }
 
-void Firefly::draw( Vec2f _pos ) 
+void FlyCapture::draw( glm::vec2 _pos)
 {
 	generateTexture();
     if (tex) gl::draw( tex, _pos );
 }
 
-void Firefly::draw( Rectf _bounds )
+void FlyCapture::draw( Rectf _bounds )
 {
 	generateTexture();
     if (tex) gl::draw( tex, _bounds);
 }
 
-void Firefly::stop() {
+void FlyCapture::stop() {
         // Stop capturing images
     error = cam.StopCapture();
     if (error != PGRERROR_OK) PrintError( error );   
@@ -330,7 +330,7 @@ void Firefly::stop() {
     if (error != PGRERROR_OK) PrintError( error );
 }
 
-void Firefly::printPropertyInfo( PropertyType _type, string _name) {
+void FlyCapture::printPropertyInfo( PropertyType _type, string _name) {
 	PropertyInfo propInfo;
 	propInfo.type = _type;
 	cam.GetPropertyInfo( &propInfo );
@@ -364,7 +364,7 @@ void Firefly::printPropertyInfo( PropertyType _type, string _name) {
 		
 } 
 
-void Firefly::printProperty( PropertyType _type, string _name) {
+void FlyCapture::printProperty( PropertyType _type, string _name) {
 	Property propInfo;
 	propInfo.type = _type;
 	cam.GetProperty( &propInfo );
@@ -392,7 +392,7 @@ void Firefly::printProperty( PropertyType _type, string _name) {
 		
 } 
 
-void Firefly::setProperty( PropertyType _type, float _absVal) {
+void FlyCapture::setProperty( PropertyType _type, float _absVal) {
 	Property prop;
 	prop.type = _type;
 	cam.GetProperty( &prop );
@@ -403,7 +403,7 @@ void Firefly::setProperty( PropertyType _type, float _absVal) {
 	cam.SetProperty( &prop );
 }
 
-void Firefly::PrintBuildInfo()
+void FlyCapture::PrintBuildInfo()
 {
     FC2Version fc2Version;
     Utilities::GetLibraryVersion( &fc2Version );
@@ -421,7 +421,7 @@ void Firefly::PrintBuildInfo()
     printf( timeStamp );
 }
 
-void Firefly::PrintCameraInfo( CameraInfo* pCamInfo )
+void FlyCapture::PrintCameraInfo( CameraInfo* pCamInfo )
 {
     printf(
         "\n*** CAMERA INFORMATION ***\n"
@@ -441,7 +441,7 @@ void Firefly::PrintCameraInfo( CameraInfo* pCamInfo )
         pCamInfo->firmwareBuildTime );
 }
 
-void Firefly::PrintError( Error error )
+void FlyCapture::PrintError( Error error )
 {
     error.PrintErrorTrace();
 }

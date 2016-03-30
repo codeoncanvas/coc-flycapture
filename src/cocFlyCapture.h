@@ -1,16 +1,6 @@
-/*
-
-cross platform class for using Point Grey firefly cameras
-uses Point Grey SDk on windows and LibDC1394 on OSX
-
-todo: currently only uses colour cams and coverts to mono
-
- */
-
-
 #pragma once
 
-#include "cinder/app/AppBasic.h"
+#include "cinder/app/App.h"
 #include "cinder/gl/gl.h"
 #include "cinder/gl/Texture.h"
 #include "cinder/Surface.h"
@@ -60,7 +50,7 @@ namespace coc {
 		void setProperty( FlyCapture2::PropertyType _type, float _absVal);
 
 
-		void draw( ci::Vec2f _pos = ci::Vec2f(0,0) );
+		void draw(glm::vec2 _pos = glm::vec2(0, 0));
         void draw( ci::Rectf _bounds );
 		void stop();
 
@@ -90,7 +80,7 @@ namespace coc {
         ci::Channel                     channel;
         int                             width;
         int                             height;
-        ci::gl::Texture                 tex;
+        ci::gl::TextureRef              tex;
         bool                            isCol;
         
 

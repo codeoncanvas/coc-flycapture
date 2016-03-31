@@ -32,9 +32,9 @@ void FlyCapture::setup(int _w, int _h, bool _isCol, bool _threaded, int _serial)
     width  = _w;
     height = _h;
     if (!isCol) {
-		channel = Channel(width,height);
+		channel = Channel::create(width,height);
 	} else {
-		surface = Surface( width, height, false, SurfaceChannelOrder::RGB );
+		surface = Surface::create( width, height, false, SurfaceChannelOrder::RGB );
 	}
 
     PrintBuildInfo();
@@ -90,9 +90,9 @@ void FlyCapture::setup( int _serial, bool _isCol, Format7ImageSettings _fmt7Imag
     width  = _fmt7ImageSettings.width;
     height = _fmt7ImageSettings.height;
     if (!isCol) {
-		channel = Channel(width,height);
+		channel = Channel::create(width,height);
 	} else {
-		surface = Surface( width, height, false, SurfaceChannelOrder::RGB );
+		surface = Surface::create( width, height, false, SurfaceChannelOrder::RGB );
 	}
 
     PrintBuildInfo();
@@ -165,7 +165,7 @@ void FlyCapture::update( Image *rawImage ) //threaded function for flea
 		if (!isCol) {//make mono
 			error = rawImage.Convert(PIXEL_FORMAT_MONO8, &convertedImage);
 			if (error != PGRERROR_OK) PrintError(error);
-			memcpy(channel.getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows());
+			memcpy(channel->getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows());
 			isNewFrame = true;
 		}
 		else {//RGB
@@ -173,7 +173,7 @@ void FlyCapture::update( Image *rawImage ) //threaded function for flea
 			error = rawImage.Convert(PIXEL_FORMAT_RGB8, &convertedImage);
 			if (error != PGRERROR_OK) PrintError(error);
 
-			memcpy(surface.getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows() * 3);
+			memcpy(surface->getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows() * 3);
 			isNewFrame = true;
 
 		}
@@ -185,7 +185,7 @@ void FlyCapture::update( Image *rawImage ) //threaded function for flea
 			if (error != PGRERROR_OK) PrintError(error);
 
 			imageMutex.lock();
-			memcpy(channel.getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows());
+			memcpy(channel->getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows());
 			isNewFrame = true;
 			imageMutex.unlock();
 
@@ -196,7 +196,7 @@ void FlyCapture::update( Image *rawImage ) //threaded function for flea
 			if (error != PGRERROR_OK) PrintError(error);
 
 			imageMutex.lock();
-			memcpy(surface.getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows() * 3);
+			memcpy(surface->getData(), convertedImage.GetData(), convertedImage.GetCols() * convertedImage.GetRows() * 3);
 			isNewFrame = true;
 			imageMutex.unlock();
 
@@ -212,12 +212,12 @@ void FlyCapture::generateTexture() {
 	
 	if (!isCol) {//make mono
 		imageMutex.lock();
-        tex = gl::Texture::create( channel );
+        tex = gl::Texture::create( *channel );
 		imageMutex.unlock();
 	}
 	else {//RGB
 		imageMutex.lock();
-		if (surface.getData()) tex = gl::Texture::create( surface );
+		if (surface->getData()) tex = gl::Texture::create( *surface );
 		imageMutex.unlock();
 	}
 }

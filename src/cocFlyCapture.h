@@ -44,11 +44,11 @@ namespace coc {
 		int getWidth() { return width; }
 		int getHeight() { return height; }
 
-		ci::Channel getChannel() { return channel; }
-		ci::Surface getSurface() { return surface; }
+		ci::ChannelRef getChannel() { return channel; }
+		ci::SurfaceRef getSurface() { return surface; }
 		unsigned char * getData() {
 			unsigned char * data;
-			isCol ? data = surface.getData() : data = channel.getData() ; 
+			isCol ? data = surface->getData() : data = channel->getData() ; 
 			return data;
 		} 
 
@@ -65,14 +65,14 @@ namespace coc {
 		bool		isNewFrame;
 		bool		isThreaded;
 		std::mutex	imageMutex;
-		ci::Surface surface;
+		ci::SurfaceRef surface;
 
 		void generateTexture();
 
         std::string makeString(int name);
         float       makeFloat( int name);
 
-        ci::Channel                     channel;
+        ci::ChannelRef                  channel;
         int                             width;
         int                             height;
         ci::gl::TextureRef              tex;

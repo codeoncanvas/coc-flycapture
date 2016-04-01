@@ -27,7 +27,7 @@ void onImageGrabbed(Image* pImage, const void* pCallbackData)
 
 void FlyCapture::setup(int _w, int _h, bool _isCol, bool _threaded, int _serial)
 {
-	isThreaded = false;
+	isThreaded = _threaded;
 	isCol = _isCol;
     width  = _w;
     height = _h;

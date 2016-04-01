@@ -83,7 +83,7 @@ void FlyCapture::setup(int _w, int _h, bool _isCol, bool _threaded, int _serial)
 }
 
 
-void FlyCapture::setup( int _serial, bool _isCol, Format7ImageSettings _fmt7ImageSettings, float _speed, bool _threaded )
+void FlyCapture::setup(Format7ImageSettings _fmt7ImageSettings, bool _isCol, float _speed, bool _threaded, int _serial)
 {
 	isThreaded = _threaded;
 	isCol = _isCol;
@@ -111,9 +111,15 @@ void FlyCapture::setup( int _serial, bool _isCol, Format7ImageSettings _fmt7Imag
 	}
 	
 	PGRGuid guid;
-	error = busMgr.GetCameraFromSerialNumber(_serial, &guid);
-
-    if (error != PGRERROR_OK) PrintError( error );
+	if (_serial) {
+		error = busMgr.GetCameraFromSerialNumber(_serial, &guid);
+	}
+	else {
+		unsigned int num;
+		busMgr.GetCameraSerialNumberFromIndex(0, &num);
+		error = busMgr.GetCameraFromSerialNumber(num, &guid);
+	}
+	if (error != PGRERROR_OK) PrintError(error);
 
     // Connect to a camera
     error = cam.Connect(&guid);
@@ -128,7 +134,7 @@ void FlyCapture::setup( int _serial, bool _isCol, Format7ImageSettings _fmt7Imag
 
 	cam.SetFormat7Configuration( &_fmt7ImageSettings, _speed);
 
-	if (!_threaded) {
+	if (!isThreaded) {
 		error = cam.StartCapture();
 	} else {
 		error = cam.StartCapture(onImageGrabbed, (void*)this);

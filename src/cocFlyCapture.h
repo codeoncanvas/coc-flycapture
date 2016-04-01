@@ -27,7 +27,7 @@ namespace coc {
         FlyCapture() : isNewFrame(false) {}
 
 		void setup(int _w, int _h, bool _isCol, bool _threaded = false, int _serial = 0);
-		void setup( int _serial, bool _isCol, FlyCapture2::Format7ImageSettings _fmt7ImageSettings, float _speed, bool _threaded );		
+		void setup(FlyCapture2::Format7ImageSettings _fmt7ImageSettings, bool _isCol, float _speed = 1560, bool _threaded = false, int _serial = 0);
 		
 		void update();//not required if threaded
 		void update(FlyCapture2::Image *rawImage);//automatically called by thread

@@ -1,3 +1,23 @@
+/**
+ *
+ *      ┌─┐╔═╗┌┬┐┌─┐
+ *      │  ║ ║ ││├┤
+ *      └─┘╚═╝─┴┘└─┘
+ *   ┌─┐┌─┐╔╗╔┬  ┬┌─┐┌─┐
+ *   │  ├─┤║║║└┐┌┘├─┤└─┐
+ *   └─┘┴ ┴╝╚╝ └┘ ┴ ┴└─┘
+ *
+ * Copyright (c) 2016 Code on Canvas Pty Ltd, http://CodeOnCanvas.cc
+ *
+ * This software is distributed under the MIT license
+ * https://tldrlegal.com/license/mit-license
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code
+ *
+ **/
+
+
 #include "cocFlyCapture.h"
 #include "cinder/ImageIo.h"
 #include "cinder/Log.h"
@@ -7,7 +27,7 @@ using namespace ci::app;
 using namespace std;
 
 namespace coc{
-	
+
 using namespace FlyCapture2;
 
 // <GLOBAL IF THREADED>
@@ -109,7 +129,7 @@ void FlyCapture::setup(Format7ImageSettings _fmt7ImageSettings, bool _isCol, flo
 		busMgr.GetCameraSerialNumberFromIndex(i, &num);
 		console() << "\t" << num << endl;
 	}
-	
+
 	PGRGuid guid;
 	if (_serial) {
 		error = busMgr.GetCameraFromSerialNumber(_serial, &guid);
@@ -130,7 +150,7 @@ void FlyCapture::setup(Format7ImageSettings _fmt7ImageSettings, bool _isCol, flo
     error = cam.GetCameraInfo(&camInfo);
     if (error != PGRERROR_OK) PrintError( error );
 
-    PrintCameraInfo(&camInfo); 
+    PrintCameraInfo(&camInfo);
 
 	cam.SetFormat7Configuration( &_fmt7ImageSettings, _speed);
 
@@ -145,7 +165,7 @@ void FlyCapture::setup(Format7ImageSettings _fmt7ImageSettings, bool _isCol, flo
 
 
 void FlyCapture::update() {
-	
+
 	if (isThreaded)
 	{
 		//CI_LOG_E("Threaded, no need to call update()!");
@@ -209,13 +229,13 @@ void FlyCapture::update( Image *rawImage ) //threaded function for flea
 
 		}
 	}
-	
 
-	
+
+
 }
 
 void FlyCapture::generateTexture() {
-	
+
 	if (!isCol) {//make mono
 		imageMutex.lock();
         tex = gl::Texture::create( *channel );
@@ -243,7 +263,7 @@ void FlyCapture::draw( Rectf _bounds )
 void FlyCapture::stop() {
         // Stop capturing images
     error = cam.StopCapture();
-    if (error != PGRERROR_OK) PrintError( error );   
+    if (error != PGRERROR_OK) PrintError( error );
     // Disconnect the camera
     error = cam.Disconnect();
     if (error != PGRERROR_OK) PrintError( error );
@@ -253,7 +273,7 @@ void FlyCapture::printPropertyInfo( PropertyType _type, string _name) {
 	PropertyInfo propInfo;
 	propInfo.type = _type;
 	cam.GetPropertyInfo( &propInfo );
-	
+
 	printf(
 		"\nCamera Property Type: %s\n"
 		"\tpresent: %i\n"
@@ -280,14 +300,14 @@ void FlyCapture::printPropertyInfo( PropertyType _type, string _name) {
 		propInfo.absMin,
 		propInfo.absMax
 		);
-		
-} 
+
+}
 
 void FlyCapture::printProperty( PropertyType _type, string _name) {
 	Property propInfo;
 	propInfo.type = _type;
 	cam.GetProperty( &propInfo );
-	
+
 	printf(
 		"\nCamera Property: %s\n"
 		"\tpresent: %i\n"
@@ -308,8 +328,8 @@ void FlyCapture::printProperty( PropertyType _type, string _name) {
 		propInfo.valueB,
 		propInfo.absValue
 		);
-		
-} 
+
+}
 
 void FlyCapture::setProperty( PropertyType _type, float _absVal) {
 	Property prop;
@@ -327,9 +347,9 @@ void FlyCapture::PrintBuildInfo()
     FC2Version fc2Version;
     Utilities::GetLibraryVersion( &fc2Version );
     char version[128];
-    sprintf( 
-        version, 
-        "FlyCapture2 library version: %d.%d.%d.%d\n", 
+    sprintf(
+        version,
+        "FlyCapture2 library version: %d.%d.%d.%d\n",
         fc2Version.major, fc2Version.minor, fc2Version.type, fc2Version.build );
 
     printf( version );

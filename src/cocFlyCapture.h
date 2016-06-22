@@ -1,3 +1,23 @@
+/**
+ *
+ *      ┌─┐╔═╗┌┬┐┌─┐
+ *      │  ║ ║ ││├┤
+ *      └─┘╚═╝─┴┘└─┘
+ *   ┌─┐┌─┐╔╗╔┬  ┬┌─┐┌─┐
+ *   │  ├─┤║║║└┐┌┘├─┤└─┐
+ *   └─┘┴ ┴╝╚╝ └┘ ┴ ┴└─┘
+ *
+ * Copyright (c) 2016 Code on Canvas Pty Ltd, http://CodeOnCanvas.cc
+ *
+ * This software is distributed under the MIT license
+ * https://tldrlegal.com/license/mit-license
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code
+ *
+ **/
+
+
 #pragma once
 
 #include "cinder/app/App.h"
@@ -8,12 +28,12 @@
 #include "cinder/ConcurrentCircularBuffer.h"
 #include <stdio.h>
 #include <tchar.h>
-	
+
 //POINT GREY
-#ifndef _WIN32_WINNT            // Allow use of features specific to Windows XP or later.                   
+#ifndef _WIN32_WINNT            // Allow use of features specific to Windows XP or later.
 #define _WIN32_WINNT 0x0501     // Change this to the appropriate value to target other versions of Windows.
-#endif          
-#define _CRT_SECURE_NO_WARNINGS                                 
+#endif
+#define _CRT_SECURE_NO_WARNINGS
 #include "FlyCapture2.h"
 
 
@@ -28,7 +48,7 @@ namespace coc {
 
 		void setup(int _w, int _h, bool _isCol, bool _threaded = false, int _serial = 0);
 		void setup(FlyCapture2::Format7ImageSettings _fmt7ImageSettings, bool _isCol, float _speed = 1560, bool _threaded = false, int _serial = 0);
-		
+
 		void update();//not required if threaded
 		void update(FlyCapture2::Image *rawImage);//automatically called by thread
 
@@ -48,11 +68,11 @@ namespace coc {
 		ci::SurfaceRef getSurface() { return surface; }
 		unsigned char * getData() {
 			unsigned char * data;
-			isCol ? data = surface->getData() : data = channel->getData() ; 
+			isCol ? data = surface->getData() : data = channel->getData() ;
 			return data;
-		} 
+		}
 
-        
+
         bool checkNewFrame() {
             bool tmp = isNewFrame;
             isNewFrame = false;

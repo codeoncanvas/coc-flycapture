@@ -60,7 +60,6 @@ void FlyCapture::setup(int _w, int _h, bool _isCol, bool _threaded, int _serial)
     PrintBuildInfo();
 
     BusManager busMgr;
-    unsigned int numCameras;
     error = busMgr.GetNumOfCameras(&numCameras);
     if (error != PGRERROR_OK) PrintError( error );
 
@@ -118,7 +117,6 @@ void FlyCapture::setup(Format7ImageSettings _fmt7ImageSettings, bool _isCol, flo
     PrintBuildInfo();
 
     BusManager busMgr;
-    unsigned int numCameras;
     error = busMgr.GetNumOfCameras(&numCameras);
     if (error != PGRERROR_OK) PrintError( error );
 

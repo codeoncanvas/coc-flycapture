@@ -79,8 +79,11 @@ namespace coc {
             return tmp;
         }
 
+		unsigned int getNumCameras() { return numCameras; }
 
 	private:
+
+		unsigned int numCameras = 0;
 
 		bool		isNewFrame;
 		bool		isThreaded;
